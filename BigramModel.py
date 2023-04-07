@@ -1,5 +1,6 @@
 from EvaluationResult import EvaluationResult
-
+from AugmentedSuffixTree import AugmentedSuffixTree
+from Viterbi import Viterbi
 class BigramModel:
     def __init__(self, maxSuffixLength : int):
         self.maxSuffixLength = maxSuffixLength
@@ -13,7 +14,7 @@ class BigramModel:
         #Map<String, Map<String, Integer>> 
         self.tagWordCount = {}
         #Map<String, Map<String, Integer>>
-        self.tagWordCount = {}
+        self.wordTagCount = {}
     
     #we assume that the sents are already tagged
     def train(self, tagged_train_sents):
@@ -59,13 +60,36 @@ class BigramModel:
                         self.tagStartCount[tag] = 1
                 prevTag = tag
 
-    def evaluate(self) -> EvaluationResult:
-        pass
+    def evaluate(self, upperCaseTree:AugmentedSuffixTree, lowerCaseTree:AugmentedSuffixTree, sentences) -> EvaluationResult:
+        #sentendes are actually taggedSentences
+
+        sentenceTags = []
+        rawSentences = []
+
+        viterbi = Viterbi(self, upperCaseTree, lowerCaseTree, self.maxSuffixLength)
+
+        for sentence in sentences:
+            rawSentence = [word for (word, _) in sentence]
+            sentenceTags.append(viterbi.run(rawSentence))
+            rawSentences.append(rawSentence)
+        return EvaluationResult(rawSentences, sentenceTags, sentences)
 
     def getTags(self):
-        #vrati novu kopiju tagova
+        #return a new copy of the tags
         return dict(self.tagCount)
+
+    def getTagCount(self, tag:str):
+        count = 0
+        if tag in self.tagCount:
+            count = self.tagCount[tag]
+        return count
     
+    def getTagStartCount(self, tag:str):
+        count = 0
+        if tag in self.tagStartCount:
+            count = self.tagStartCount[tag]
+        return count
+
     def getTagTransitionCount(self, fromTag : str, toTag: str):
         if fromTag not in self.tagTransitionCount:
             self.tagTransitionCount[fromTag] = {}
@@ -90,6 +114,72 @@ class BigramModel:
         if(word in self.wordCount):
             return self.wordCount(word)
         return 0
+
+    def getTagsForWord(self, word:str):
+        wordTag = {}
+        if word in self.wordTagCount:
+            wordTag = self.wordTagCount[word]
+        return list(wordTag.keys())
+    
+    def getTagWordCount(self, tag:str, word:str):
+        tagWord = {}
+        if word in self.tagWordCount:
+            tagWord = self.tagWordCount[word]
+        
+        count = 0
+        if tag in tagWord:
+            count = tagWord[tag]
+        
+        return count
+
+    def getWordTagCount(self, tag:str, word:str):
+        wordTag = {}
+        if word in self.wordTagCount:
+            wordTag = self.wordTagCount[word]
+        
+        count = 0
+        if tag in wordTag:
+            count = wordTag[tag]
+        
+        return count
+    
+    def incrementTagCount(self, tag:str):
+        if tag in self.tagCount:
+            self.tagCount[tag] += 1
+        else:
+            self.tagCount[tag] = 1
+
+    def incrementTagStartCount(self, tag:str):
+        if tag in self.tagStartCount:
+            self.tagStartCount[tag] += 1
+        else:
+            self.tagStartCount[tag] = 1
+        self.sentenceCount += 1
+        
+
+    def incrementWordCount(self, word:str):
+        if word in self.wordCount:
+            self.wordCount[word] += 1
+        else:
+            self.wordCount[word] = 1
+
+    def incrementTagWordCount(self, tag:str, word:str):
+        if tag not in self.tagWordCount:
+            self.tagWordCount[tag] = {}
+        
+        tWCount = 1
+        if word in self.tagWordCount:
+            tWCount += self.tagWordCount[word]
+        self.tagWordCount[tag][word] = tWCount
+
+        if word not in self.wordTagCount:
+            self.wordTagCount[word] = {}
+        
+        wTcount = 1
+        if tag in self.wordTagCount[word]:
+            wTcount += self.wordTagCount[word][tag]
+        
+        self.wordTagCount[word][tag] = wTcount
 
     def getEmissionProbability(self, tag : str, word : str):
         tagAndWordCount = 0

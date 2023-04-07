@@ -1,11 +1,11 @@
-from BigramModel import BigramModel
 from Matrix import Matrix
-from suffix_tree import Tree as SuffixTree
+from AugmentedSuffixTree import AugmentedSuffixTree as SuffixTree
+from SuffixStats import SuffixStats
 import math
 
 class Viterbi:
-    def __init__(self, bigramModel : BigramModel, upperCaseSuffixTree : SuffixTree, lowerCaseSuffixTree : SuffixTree, maxSuffixLength : int) -> None:
-        self.model : BigramModel = bigramModel
+    def __init__(self, bigramModel, upperCaseSuffixTree : SuffixTree, lowerCaseSuffixTree : SuffixTree, maxSuffixLength : int) -> None:
+        self.model = bigramModel
         self.upperCaseTree = upperCaseSuffixTree
         self.lowerCaseTree = lowerCaseSuffixTree
         self.maxSuffixLength = maxSuffixLength
@@ -74,6 +74,11 @@ class Viterbi:
         
         return wordTags
     
+    def strDif(self, str1, str2):
+        cmp = 0
+        for i in range(0, min(len(str1), len(str2))):
+            cmp += ord(str1[i]) - ord(str2[i])
+
     def getSuffixStats(self, word : str):
         numTags = len(self.tags)
 
@@ -84,6 +89,28 @@ class Viterbi:
             suffixLength : int = min(self.maxSuffixLength, len(word))
 
             startingIndex = len(word) - suffixLength
-            suffix : str = word[:startingIndex]
+            suffix = word[:startingIndex]
 
+            stats = SuffixStats()
+            if(word[0] == word[0].upper()):
+                stats = SuffixStats(self.upperCaseTree, suffix, tag)
+            else:
+                stats = SuffixStats(self.lowerCaseTree, suffix, tag)
             
+            #just in case that the tag never occurs in the tree
+            #maybe i will need to implement laplacian here
+            probWordIsTag = 0.0
+            if stats.tagProb > 0.0:
+                probWordIsTag = stats.tagSuffixProb * stats.suffixProb / stats.tagProb
+            
+            stateProbs[state] = probWordIsTag
+            
+        #useless code?
+        maxEntry = None
+
+        for (key, val) in stateProbs:
+            dif = self.strDif(maxEntry[1], val)
+            if maxEntry == None or self.strDif(val, maxEntry[key]):
+                maxEntry = (key, val)
+        
+        return stateProbs

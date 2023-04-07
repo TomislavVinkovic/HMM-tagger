@@ -1,4 +1,5 @@
 class EvaluationResult:
-    def __init__(self, sententes, sentenceTags) -> None:
-        self.sentences = sententes #list<list<string>>
-        self.sentenceTags = sentenceTags #list<list<string>>
+    def __init__(self, sententes, sentenceTags, goldenTaggedSentences) -> None:
+        self.sentences = sententes
+        self.sentenceTags = sentenceTags
+        self.goldenTaggedSentences = goldenTaggedSentences

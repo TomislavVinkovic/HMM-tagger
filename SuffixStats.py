@@ -1,4 +1,4 @@
-from suffix_tree import Tree as SuffixTree
+from AugmentedSuffixTree import AugmentedSuffixTree as SuffixTree
 
 class SuffixStats:
     

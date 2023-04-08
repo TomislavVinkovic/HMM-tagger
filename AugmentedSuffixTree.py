@@ -39,13 +39,16 @@ class AugmentedSuffixTree:
         return count
     
     def incrementTagSuffixCount(self, tag:str):
-        if tag in self.suffixCount:
-            self.suffixCount[tag] += 1
+        if tag in self.tagSuffixCount:
+            self.tagSuffixCount[tag] += 1
         else:
-            self.suffixCount[tag] = 0
+            self.tagSuffixCount[tag] = 1
     
     def get(self, letter:str):
-        return self.nodes[letter]
+        try:
+            return self.nodes[letter]
+        except:
+            return None
 
     def put(self, key:str, val):
         self.nodes[key] = val
@@ -54,7 +57,7 @@ class AugmentedSuffixTree:
         subTree = self
         for i in range(0, len(suffix)):
             letter = suffix[i:]
-            if(subTree.containsKey(letter)):
+            if(not subTree.containsKey(letter)):
                 subTree.put(letter, AugmentedSuffixTree())
             subTree = subTree.get(letter)
         return subTree
@@ -64,6 +67,7 @@ class AugmentedSuffixTree:
         for i in range(0, len(suffix)):
             subTree = self.getSubTree(suffix[i:])
             subTree.incrementTagSuffixCount(tag)
+            subTree.incrementCount()
             self.totalCount += 1
             self.totalTagCount += 1
 
@@ -71,6 +75,9 @@ class AugmentedSuffixTree:
         #is the key found in the tree
         return (key in self.nodes)
     
+    def getCount(self):
+        return self.suffixCount
+
     def getTagSuffixProbability(self, suffix:str, tag:str):
         mles = Stack()
         

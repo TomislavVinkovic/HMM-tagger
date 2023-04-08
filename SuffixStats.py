@@ -7,7 +7,7 @@ class SuffixStats:
         self.suffixProb = 0.0
         self.tagProb = 0.0
 
-        while not tree.find(suffix) and len(suffix) > 0:
+        while not tree.hasSuffix(suffix) and len(suffix) > 0:
             suffix = suffix[1:]
         #TODO: Finish suffixStats class
         

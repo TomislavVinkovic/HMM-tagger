@@ -11,12 +11,12 @@ class AugmentedSuffixTreeFactory:
     
     def buildUpperCaseTree(self) -> AugmentedSuffixTree:
         #words that start with an upper case letter
-        words = [word for word in list(filter(lambda word: word[0].upper() == word[0], self.model.wordCount.keys()))]
+        words = [word for word in list(filter(lambda word: word[0].isupper(), self.model.wordCount.keys()))]
         return self.buildTree(words)
     
     def buildLowerCaseTree(self) -> AugmentedSuffixTree:
         #words that start with an lower case letter
-        words = [word for word in list(filter(lambda word: word[0].lower() == word[0], self.model.wordCount.keys()))]
+        words = [word for word in list(filter(lambda word: word[0].islower(), self.model.wordCount.keys()))]
         return self.buildTree(words)
     
     def buildTree(self, words):
@@ -24,16 +24,16 @@ class AugmentedSuffixTreeFactory:
         for word in words:
             if self.model.getWordCount(word) < self.MAX_WORD_FREQUENCY:
                 suffixWords.append(word)
-        
+
         tags = self.model.getTags()
         suffixTagCount = {}
         for tag in tags:
             for word in suffixWords:
                 stc = 0
                 if tag in suffixTagCount:
-                    stc = suffixTagCount[tag]
+                    stc += suffixTagCount[tag]
                 count = self.model.getWordTagCount(tag, word) + stc
-                stc[tag] = count
+                suffixTagCount[tag] = count
         
         suffixTags = list(suffixTagCount.keys())
         totalTags = 0

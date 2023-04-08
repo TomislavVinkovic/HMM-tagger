@@ -1,8 +1,8 @@
 from Matrix import Matrix
 from AugmentedSuffixTree import AugmentedSuffixTree as SuffixTree
 from SuffixStats import SuffixStats
+import numpy as np
 import math
-
 class Viterbi:
     def __init__(self, bigramModel, upperCaseSuffixTree : SuffixTree, lowerCaseSuffixTree : SuffixTree, maxSuffixLength : int) -> None:
         self.model = bigramModel
@@ -10,17 +10,17 @@ class Viterbi:
         self.lowerCaseTree = lowerCaseSuffixTree
         self.maxSuffixLength = maxSuffixLength
 
-        self.tags = self.model.getTags()
-        self.numTags = self.tags.size()
+        self.tags = list(self.model.getTags().keys())
+        self.numTags = len(self.tags)
 
     def run(self, sentence):
         sentenceLength = len(sentence)
-        ppMatrix = Matrix(self.numTags, sentenceLength)
-        backPointer = Matrix(self.numTags, sentenceLength)
+        ppMatrix = Matrix(self.numTags, sentenceLength, 'float')
+        backPointer = Matrix(self.numTags, sentenceLength, 'int')
 
         for state in range(0, self.numTags):
             timeStep = 0
-            prob = float(self.Model.getStartProbability(self.tags[state]))
+            prob = float(self.model.getStartProbability(self.tags[state]))
             word = sentence[timeStep]
             emmisionProb = float(self.getEmissionProbability(state, word))
             ppMatrix.set(state, timeStep, prob * emmisionProb)
@@ -35,17 +35,20 @@ class Viterbi:
                     if self.model.getTagTransitionCount(self.tags[prevState], self.tags[state]) > 0:
                         transitionProb = float(self.model.getTransitionProbablity(self.tags[prevState], self.tags[state]))
                         prevProb = ppMatrix.get(prevState, timeStep - 1)
-                    if maxProb < transitionProb * prevProb:
-                        maxProb - transitionProb * prevProb
-                        maxPrevState = prevState
-            emmisionProb = float(self.getEmissionProbability(state, word))
-            ppMatrix.set(state, timeStep, maxProb + emmisionProb)
-            backPointer.set(state, timeStep, maxPrevState)
+                        if maxProb < transitionProb * prevProb:
+                            maxProb = transitionProb * prevProb
+                            maxPrevState = prevState
+                emmisionProb = float(self.getEmissionProbability(state, word))
+                ppMatrix.set(state, timeStep, maxProb + emmisionProb)
+                backPointer.set(state, timeStep, maxPrevState)
+
+        # backPointer.print()
+        # ppMatrix.print()
         return self.getWordTags(ppMatrix, backPointer, sentenceLength)
 
 
     def getEmissionProbability(self, state : int, word : str):
-        if self.model.getWordCount() > 0:
+        if self.model.getWordCount(word) > 0:
             return self.model.getEmissionProbability(self.tags[state], word)
         stateProbs = self.getSuffixStats(word)
         return stateProbs[state]
@@ -58,26 +61,18 @@ class Viterbi:
             if(ppMatrix.get(state, timeStep) > ppMatrix.get(bestPathPointer, timeStep)):
                 bestPathPointer = state
         
-        #array integera, mozda cu koristiti numpy array
-        bestPath = []
+        bestPath = np.zeros(sentenceLength, dtype=int)
         bestPath[sentenceLength - 1] = bestPathPointer
-
-        for timeStep in range(sentenceLength - 2, -1. -1):
+        for timeStep in range(sentenceLength - 2, -1, -1):
             nextTimeStep = timeStep + 1
             bestPath[timeStep] = backPointer.get(bestPath[nextTimeStep], nextTimeStep)
         
         #lista stringova
         wordTags = []
-        for timestep in range (0, sentenceLength):
-            #tu ce mozda trebati raditi "null" checkove
+        for timeStep in range (0, sentenceLength):
             wordTags.append(self.tags[bestPath[timeStep]])
         
         return wordTags
-    
-    def strDif(self, str1, str2):
-        cmp = 0
-        for i in range(0, min(len(str1), len(str2))):
-            cmp += ord(str1[i]) - ord(str2[i])
 
     def getSuffixStats(self, word : str):
         numTags = len(self.tags)
@@ -91,7 +86,7 @@ class Viterbi:
             startingIndex = len(word) - suffixLength
             suffix = word[:startingIndex]
 
-            stats = SuffixStats()
+            stats = None
             if(word[0] == word[0].upper()):
                 stats = SuffixStats(self.upperCaseTree, suffix, tag)
             else:
@@ -106,11 +101,11 @@ class Viterbi:
             stateProbs[state] = probWordIsTag
             
         #useless code?
-        maxEntry = None
+        # maxEntry = None
+        # for key, val in stateProbs.items():
+        #     dif = val - maxEntry[1] if maxEntry != None else -1e9
+        #     if maxEntry == None or dif > 0:
+        #         maxEntry = (key, val)
 
-        for (key, val) in stateProbs:
-            dif = self.strDif(maxEntry[1], val)
-            if maxEntry == None or self.strDif(val, maxEntry[key]):
-                maxEntry = (key, val)
-        
+        #print(stateProbs)
         return stateProbs

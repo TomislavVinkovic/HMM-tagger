@@ -2,7 +2,6 @@ from queue import LifoQueue as Stack
 
 class AugmentedSuffixTree:
     def __init__(self):
-        self.theta = 0.0
         self.suffixCount = 0
         self.totalCount = 0
         self.totalTagCount = 0
@@ -30,7 +29,7 @@ class AugmentedSuffixTree:
         if tag in self.tagCount:
             self.tagCount[tag] += 1
         else:
-            self.tagCount[tag] = 0
+            self.tagCount[tag] = 1
         
     def getTagSuffixCount(self, tag:str):
         count = 0
@@ -57,7 +56,7 @@ class AugmentedSuffixTree:
         subTree = self
         for i in range(0, len(suffix)):
             letter = suffix[i:]
-            if(not subTree.containsKey(letter)):
+            if not subTree.containsKey(letter):
                 subTree.put(letter, AugmentedSuffixTree())
             subTree = subTree.get(letter)
         return subTree
@@ -72,8 +71,8 @@ class AugmentedSuffixTree:
             self.totalTagCount += 1
 
     def containsKey(self, key:str):
-        #is the key found in the tree
-        return (key in self.nodes)
+        #is the key in the tree
+        return key in self.nodes
     
     def getCount(self):
         return self.suffixCount
@@ -96,11 +95,11 @@ class AugmentedSuffixTree:
         return probability
 
     def getSuffixProbability(self, suffix:str):
-        subTree = self.getSubtree(suffix)
+        subTree = self.getSubTree(suffix)
         suffixCount = subTree.getCount()
 
         return float(suffixCount) / float(self.totalCount)
 
-    def getTragProbability(self, suffix:str, tag:str):
+    def getTagProbability(self, suffix:str, tag:str):
         tagCount = self.getTagCount(tag)
         return float(tagCount) / float(self.totalTagCount)

@@ -49,6 +49,7 @@ class AugmentedSuffixTreeFactory:
                 tree.addSuffix(word[i:], tag)
         
         theta = self.calculateTheta(suffixTags, suffixTagCount, totalTags)
+        tree.setTheta(theta)
 
         return tree
     

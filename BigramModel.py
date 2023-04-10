@@ -47,7 +47,7 @@ class BigramModel:
                 prevTag = tag
 
     def evaluate(self, upperCaseTree:AugmentedSuffixTree, lowerCaseTree:AugmentedSuffixTree, sentences) -> EvaluationResult:
-        #sentendes are actually taggedSentences
+        #sentences are actually taggedSentences
 
         sentenceTags = []
         rawSentences = []
@@ -77,8 +77,6 @@ class BigramModel:
         return count
 
     def getTagTransitionCount(self, fromTag : str, toTag: str):
-        if fromTag not in self.tagTransitionCount:
-            self.tagTransitionCount[fromTag] = {}
         if fromTag in self.tagTransitionCount and toTag in self.tagTransitionCount[fromTag]:
             return self.tagTransitionCount[fromTag][toTag]
         return 0
@@ -86,15 +84,18 @@ class BigramModel:
     def getTransitionProbablity(self, fromTag: str, toTag : str):
         tagToTagCount = 0
         tagOccurences = 0
-        if fromTag not in self.tagTransitionCount:
-            self.tagTransitionCount[fromTag] = {}
-        if fromTag in self.tagTransitionCount and toTag in self.tagTransitionCount:
+        if fromTag in self.tagTransitionCount and toTag in self.tagTransitionCount[fromTag]:
             tagToTagCount = self.tagTransitionCount[fromTag][toTag]
         
         if fromTag in self.tagCount:
             tagOccurences = self.tagCount[fromTag]
         
-        return float(tagToTagCount) / float(tagOccurences) if tagOccurences > 0 else 0
+        # if tagOccurences > 0:
+        #     return float(tagToTagCount) / float(tagOccurences)
+        # return 0
+
+        #laplacian
+        return float(tagToTagCount + 1) / float(tagOccurences + 12) #12 je broj
     
     def getWordCount(self, word : str):
         if(word in self.wordCount):
@@ -108,32 +109,23 @@ class BigramModel:
         return list(wordTag.keys())
     
     def getTagWordCount(self, tag:str, word:str):
-        tagWord = {}
-        if word in self.tagWordCount:
-            tagWord = self.tagWordCount[word]
-        
-        count = 0
-        if tag in tagWord:
-            count = tagWord[tag]
-        
-        return count
+        if tag in self.tagWordCount and word in self.tagWordCount[tag]:
+            return self.tagWordCount[tag][word]
+        return 0
 
-    def getWordTagCount(self, tag:str, word:str):
-        wordTag = {}
-        if word in self.wordTagCount:
-            wordTag = self.wordTagCount[word]
-        
-        count = 0
-        if tag in wordTag:
-            count = wordTag[tag]
-        
-        return count
     
+    def getWordTagCount(self, tag:str, word:str):
+        if word in self.wordTagCount and tag in self.wordTagCount[word]:
+            return self.wordTagCount[word][tag]
+        return 0
+    
+    #zadnja promjena
     def incrementTagCount(self, tag:str):
         if tag in self.tagCount:
             self.tagCount[tag] += 1
         else:
             self.tagCount[tag] = 1
+        self.totalTagCount += 1
 
     def incrementTagTransitionCount(self, fromTag:str, toTag:str):
         if fromTag not in self.tagTransitionCount:
@@ -188,7 +180,14 @@ class BigramModel:
         if tagOccurences > 0:
             return float(tagAndWordCount) / float(tagOccurences)
         
-        return 0
+        #laplacian, nije radio najbolje
+        return 1.0 / 12.0 #12 je broj tagova
+
+        #uzmi najvjerojatniji tag, isto nije radilo najbolje
+        #return float(self.tagCount[max(self.tagCount, key=self.tagCount.get)]) / float(sum(self.tagCount.values()))
+        
+        #Imenica, isto nije radilo nabolje
+        #return self.tagCount['NOUN']/sum(self.tagCount.values())
 
     def getStartProbability(self, tag:str):
         startCount = 0

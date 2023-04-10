@@ -42,16 +42,15 @@ class Viterbi:
                 ppMatrix.set(state, timeStep, maxProb + emmisionProb)
                 backPointer.set(state, timeStep, maxPrevState)
 
-        # backPointer.print()
-        # ppMatrix.print()
         return self.getWordTags(ppMatrix, backPointer, sentenceLength)
 
 
     def getEmissionProbability(self, state : int, word : str):
-        if self.model.getWordCount(word) > 0:
-            return self.model.getEmissionProbability(self.tags[state], word)
-        stateProbs = self.getSuffixStats(word)
-        return stateProbs[state]
+        return self.model.getEmissionProbability(self.tags[state], word)
+    
+        #iz nekog razloga, niti suffixTree pristup nije radio dobro
+        # stateProbs = self.getSuffixStats(word)
+        # return stateProbs[state]
     
     #ova metoda vraca najbolju sekvencu tagova iz backpointer matrice
     def getWordTags(self, ppMatrix : Matrix, backPointer : Matrix, sentenceLength : int):
@@ -99,13 +98,4 @@ class Viterbi:
                 probWordIsTag = stats.tagSuffixProb * stats.suffixProb / stats.tagProb
             
             stateProbs[state] = probWordIsTag
-            
-        #useless code?
-        # maxEntry = None
-        # for key, val in stateProbs.items():
-        #     dif = val - maxEntry[1] if maxEntry != None else -1e9
-        #     if maxEntry == None or dif > 0:
-        #         maxEntry = (key, val)
-
-        #print(stateProbs)
         return stateProbs
